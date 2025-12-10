@@ -1,0 +1,35 @@
+:root {
+    --main-bg: #fef2f2;
+    /* Ana arka plan (Çok açık pembe) */
+    --panel-bg: #ffffff;
+    /* Panel ve Kart arka planı (Beyaz) */
+    --sidebar-bg: #ffffff;
+    /* Sol panel arka planı (Beyaz) */
+    --accent: #ec4899;
+    /* Ana Vurgu Rengi (Canlı Pembe) */
+    --accent-dark: #db2777;
+    /* Koyu Vurgu (Koyu Pembe) */
+    --accent-hover: #be185d;
+    /* Vurgu Hover */
+    --accent-light: #fce7f3;
+    /* Açık Vurgu (Soluk Pembe) */
+    --text-main: #1f2937;
+    /* Ana Metin Rengi (Koyu Gri) */
+    --text-secondary: #6b7280;
+    /* İkincil Metin (Orta Gri) */
+    --text-light: #ffffff;
+    /* Açık Metin (Beyaz) */
+    --border: #fecdd3;
+    /* Kenarlık Rengi (Açık pembe) */
+    --btn-bg: #ec4899;
+    /* Buton Arka Planı */
+    --btn-hover: #db2777;
+    /* Buton Hover */
+    --btn-text: #ffffff;
+    /* Buton Metni */
+    --input-bg: #fdf2f8;
+    /* Input Arka Planı */
+    --input-border: #f9a8d4;
+    /* Input Kenarlık */
+    --shadow: 0 2px 8px rgba(219, 39, 119, 0.08);
+}

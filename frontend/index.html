@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="music.css">
+    <script src="music.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melodia</title>
+    <link rel="stylesheet" href="root.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="resimler/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="resimler/logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="resimler/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="resimler/logo.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <div>
+        <!-- Orta kısım -->
+        <div class="mid">
+            <!-- Sol panel -->
+            <div class="midLeft">
+                <div class="leftPanelSongs">
+                    <div class="logo-header-row">
+                        <img src="resimler/logo.png" alt="Melodia Logo">
+                        <h5 class="section-title">Melodia</h5>
+                    </div>
+
+                    <nav class="menu-box">
+                        <a href="#" id="home-btn" class="nav-link active">
+                            <i class="bi bi-house-fill"></i>
+                            <span>Ana Sayfa</span>
+                        </a>
+                        <a href="#" id="library-btn" class="nav-link">
+                            <i class="bi bi-collection"></i>
+                            <span>Kitaplığım</span>
+                        </a>
+                    </nav>
+
+                    <!-- Ayırıcı Çizgi -->
+                    <div class="sidebar-divider"></div>
+
+                    <!-- Çalma Listeleri Bölümü -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-header">
+                            <span class="sidebar-section-title">Çalma Listelerin</span>
+                            <div class="sidebar-search-inline">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="playlistSearch" placeholder="Ara...">
+                            </div>
+                        </div>
+                        <div class="playlist-list" id="musicListHTML">
+                            <!-- Playlistler JavaScript ile doldurulacak -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Orta panel -->
+            <div class="midmid0">
+                <div class="sound-player">
+                    <!-- Arama Kutusu -->
+                    <div class="search-container">
+                        <i class="bi bi-search"></i>
+                        <input id="midsearch" type="text" placeholder="Şarkı, sanatçı veya albüm ara...">
+                    </div>
+
+                    <!-- Sayfa Başlığı -->
+                    <div class="page-header">
+                        <h1 class="FirstTitle" id="musiclistmid">Bugün ne dinlemek istersin?</h1>
+                    </div>
+
+                    <!-- Ana Sayfa İçeriği (Tür Kartları) -->
+                    <div class="content-section" id="homeSection">
+                        <h3 class="section-subtitle">Popüler Türler</h3>
+                        <div class="genres-container row" id="genresContainer">
+                            <!-- Türler JavaScript ile doldurulacak -->
+                        </div>
+                    </div>
+
+                    <!-- Şarkı Listesi (tür/playlist seçildiğinde gösterilecek) -->
+                    <div class="tracks-section" id="tracksSection" style="display: none;">
+                        <div class="tracks-header">
+                            <h3 class="genre-title" id="currentGenreTitle">Şarkılar</h3>
+                        </div>
+                        <div class="tracks-list" id="tracksList">
+                            <!-- Şarkılar JavaScript ile doldurulacak -->
+                        </div>
+                    </div>
+
+                    <!-- Arama Sonuçları -->
+                    <div class="search-results-section" id="searchResultsSection" style="display: none;">
+                        <div class="tracks-list" id="searchResultsList">
+                            <!-- Arama sonuçları JavaScript ile doldurulacak -->
+                        </div>
+                    </div>
+
+                    <!-- Kitaplık İçeriği -->
+                    <div class="library-content" id="libraryContentSection" style="display: none;">
+                        <h3 class="section-subtitle">Çalma Listelerim</h3>
+                        <div class="library-playlists" id="libraryPlaylistsGrid">
+                            <!-- Playlistler JavaScript ile doldurulacak -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Alt kısım (footer) -->
+    <div class="Bottom">
+        <!-- Müzik çalar örnek alanı -->
+        <!-- Modern footer oynatıcı (deneme.html tarzı) -->
+        <div class="footer-player"
+            style="width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 12px 32px; background: var(--panel-bg); height: 80px; background-color: #ffffff ">
+            <div class="player-song-info"
+                style="display: flex; align-items: center; gap: 16px; width: 22%; min-width: 180px;">
+                <img src="resimler/images.jpg" alt="Kapak"
+                    style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover;">
+                <div>
+                    <div id="player-song-title" style="font-weight: bold; font-size: 1.1em;">
+                        Tamirci Çırağı</div>
+                    <div id="player-song-artist" style="font-size: 0.9em; color: #888;">Cem
+                        Karaca
+                    </div>
+                </div>
+            </div>
+            <div class="player-center"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div class="player-controls"
+                    style="display: flex; align-items: center; gap: 24px; justify-content: center;">
+                    <button style="background: none; border: none; font-size: 1.3em; color: #d63384;"><i
+                            class="bi bi-shuffle"></i></button>
+                    <button style="background: none; border: none; font-size: 1.3em; color: #d63384;"><i
+                            class="bi bi-skip-start-fill"></i></button>
+                    <button style="background: none; border: none; font-size: 2.2em; color: #d63384;"><i
+                            class="bi bi-play-circle-fill"></i></button>
+                    <button style="background: none; border: none; font-size: 1.3em; color: #d63384;"><i
+                            class="bi bi-skip-end-fill"></i></button>
+                    <button style="background: none; border: none; font-size: 1.3em; color: #d63384;"><i
+                            class="bi bi-arrow-clockwise"></i></button>
+                </div>
+                <div class="player-progress-row"
+                    style="width: 100%; max-width: 480px; display: flex; align-items: center; gap: 10px; ">
+                    <span id="playerTimeStart"
+                        style="font-size: 0.9em; color: #d63384; min-width: 36px; text-align: right;">0:00</span>
+                    <input type="range" id="playerProgress" min="0" max="100" value="0"
+                        style="flex: 1; accent-color: #d63384; height: 8px; border-radius: 4px;">
+                    <span id="playerTimeEnd"
+                        style="font-size: 0.9em; color: #d63384; min-width: 36px; text-align: left;">3:45</span>
+                </div>
+            </div>
+            <div class="player-sound"
+                style="display: flex; align-items: center; gap: 10px; width: 22%; min-width: 120px; justify-content: flex-end;">
+                <i class="bi bi-volume-up" style="font-size: 1.7em; color: #d63384;"></i>
+                <input type="range" min="0" max="100" value="70" style="width: 80px; accent-color: #d63384;">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
