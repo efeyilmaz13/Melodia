@@ -1,4 +1,4 @@
-// API Base URL
+// API Temel URL'si
 const API_BASE = 'http://localhost:3000'; // Backend sunucusu için tam URL
 
 // Audio Player elementi
@@ -32,7 +32,74 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Ana sayfayı göster
     showHomeView();
+    // YerlI mp3 dosyasını footer oynatıcıya yükle ve çalmayı dene
+    loadLocalFooterTrack();
 });
+
+// Yerel mp3 dosyasını footer oynatıcıya yükler (backend /mp3/ route'u kullanılarak)
+function loadLocalFooterTrack() {
+    try {
+        const filename = 'Cem Karaca Tamirci Çırağı Ölümsüzler   YouTube.mp3';
+        const src = `${API_BASE}/mp3/${encodeURIComponent(filename)}`;
+
+        const track = {
+            id: 'local1',
+            name: 'Tamirci Çırağı',
+            artist_name: 'Cem Karaca',
+            album_image: 'resimler/images.jpg',
+            audio: src
+        };
+
+        // ilk şarkı olarak yerleştir
+        currentTrackList = [track, ...currentTrackList];
+        currentTrackIndex = 0;
+
+        // alt panel görsellerini güncelle
+        const titleEl = document.getElementById('player-song-title');//elementın el
+        const artistEl = document.getElementById('player-song-artist');
+        const imgEl = document.querySelector('.player-song-info img');
+        if (titleEl) titleEl.textContent = track.name;
+        if (artistEl) artistEl.textContent = track.artist_name;
+        if (imgEl) imgEl.src = track.album_image;
+
+        // ses kaynağını ayarla ve çalmayı dene (tarayıcı otomatik oynatma politikaları nedeniyle engellenebilir)
+        audioPlayer.src = track.audio;
+        audioPlayer.load();
+        audioPlayer.play().then(() => { //basarılı olursa alta gecıyor
+            isPlaying = true; // sarkının caldıgı ısaretlenıyor
+            updatePlayPauseButton();// Play/Pause butonunun görünümü güncelleniyor (ikon değişiyor).
+        }).catch(() => {
+            // otomatik oynatma engellendiyse — kullanıcı etkileşimine hazır bırak
+            isPlaying = false;//sarkı calmıyor olarak ısaretlenıyor
+            updatePlayPauseButton();
+        });
+
+    } catch (err) {
+        console.error('loadLocalFooterTrack error:', err);
+    }
+}
+
+// Yardımcı: hex renk kodunu yüzdeyle aç (0-100 arası)
+//tek nedenı sarkı degıstıgınde hangı sarkıda dıye gozukmesı gereken rengı ayarlamak ıcın 
+function lightenColor(hex, percent) {
+    try {
+        if (!hex) return hex; // Eğer renk kodu yoksa, olduğu gibi döndür
+        const h = hex.replace('#', ''); // # işaretini kaldır.
+        if (h.length !== 6) return hex; // Renk kodu 6 karakter değilse, olduğu gibi döndür
+        const num = parseInt(h, 16); // Hex kodunu sayıya çevir.
+        let r = (num >> 16) & 0xFF; // Kırmızı bileşenini al
+        let g = (num >> 8) & 0xFF;  // Yeşil bileşenini al
+        let b = num & 0xFF;         // Mavi bileşenini al
+        const amt = Math.round(2.55 * percent); // Açma miktarını hesapla (0-100 arası yüzde)
+        //percent parametresı demektır
+        r = Math.min(255, r + amt); // Kırmızıyı aç, 255'i geçmesin
+        g = Math.min(255, g + amt); // Yeşili aç, 255'i geçmesin
+        b = Math.min(255, b + amt); // Maviyi aç, 255'i geçmesin // amt ne kadar acmak ıstedıgımızı belırler
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`; // Yeni hex kodunu oluştur ve döndür
+    } catch (e) {
+        return hex; // Hata olursa, orijinal rengi döndür.
+    }
+}
 
 //Sidebar navigasyonu 
 function setupSidebarNavigation() {
@@ -195,6 +262,7 @@ function showSection(sectionId) {
 }
 
 // Tür (Gerne=müzik Türleri) fonksıyonları
+//asyn sayfada ozgurce hareket et ben arkadakı ıslerı hallederım 
 async function loadGenres() {
     try {
         const response = await fetch(API_BASE + '/api/genres');
@@ -231,8 +299,12 @@ function createSidebarGenreItem(genre) {
     const item = document.createElement('div');
     item.className = 'genre-item';// sitebara muzık turu genreyı koyacak kutu
     item.setAttribute('data-genre-id', genre.id);//css stılındırecek jsye cekmek ıcın data kısmını yapıyoruz 
+    const letter = (genre.name && genre.name.length) ? genre.name.charAt(0).toUpperCase() : '';
+    const bg = genre.color || '#6c5ce7';
+    const lighter = lightenColor(bg, 22);
+    const bgCss = `linear-gradient(135deg, ${bg}, ${lighter})`;
     item.innerHTML = `
-        <span class="genre-item-icon">${genre.icon}</span>
+        <span class="genre-item-badge" style="background:${bgCss};" title="${genre.name}" aria-label="${genre.name}">${letter}</span>
         <span class="genre-item-name">${genre.name}</span>
     `;
     //dolar ısareti HTML'e otomatik olarak eklenmesını saglar
@@ -260,7 +332,7 @@ function createGenreCard(genre) {
         // Sidebar'daki ilgili türü aktif yap
         const sidebarItem = document.querySelector(`.genre-item[data-genre-id="${genre.id}"]`);
         setActiveNavItem(sidebarItem);
-        loadGenreTracks(genre);
+        loadGenreTracks(genre);// sarkıların turlerıne gerne dıyoruz 
     });
 
     return col;
@@ -268,18 +340,18 @@ function createGenreCard(genre) {
 
 // Türe ait şarkıları yükle
 async function loadGenreTracks(genre) {
-    currentView = 'genre';
+    currentView = 'genre';//currentview home tusudur
 
     const titleEl = document.getElementById('musiclistmid');
-    const genreTitle = document.getElementById('currentGenreTitle');
-    const tracksList = document.getElementById('tracksList');
+    const genreTitle = document.getElementById('currentGenreTitle');//ana sayfa tür baslıkları
+    const tracksList = document.getElementById('tracksList');// parca listeleri
 
     if (titleEl) titleEl.textContent = `${genre.icon} ${genre.name}`;
-    if (genreTitle) genreTitle.innerHTML = `${genre.icon} ${genre.name} Şarkıları`;
+    if (genreTitle) genreTitle.innerHTML = ` ${genre.name} Şarkıları`;
 
     // Tracks bölümünü göster
-    showSection('tracksSection');
-
+    //albumdekı her parcaya track denır
+    showSection('tracksSection');//sarkı lıstesı idsi
     // Yükleniyor göster
     if (tracksList) tracksList.innerHTML = '<div class="loading-text"><i class="bi bi-hourglass-split"></i> Şarkılar yükleniyor...</div>';
 
@@ -300,7 +372,7 @@ async function loadGenreTracks(genre) {
         currentTrackList = tracks;
         tracksList.innerHTML = '';
 
-        tracks.forEach((track, index) => {
+        tracks.forEach((track, index) => { // index hangı sarkıda hangı numarada oldugunu soyluyo
             const trackItem = createTrackItem(track, index);
             tracksList.appendChild(trackItem);
         });
@@ -315,9 +387,11 @@ async function loadGenreTracks(genre) {
 function createTrackItem(track, index) {
     const item = document.createElement('div');
     item.className = 'track-item';
-    item.setAttribute('data-track-index', index);
+    item.setAttribute('data-track-index', index);// setAttrıbute olmasaydı her kontrol ıcın next ıcın baska sey ıcın html sayfsaı acardı
 
-    const duration = track.duration ? formatTime(track.duration) : '--:--';
+    const duration = track.duration ? formatTime(track.duration) : '--:--';// duratıon sure demek 
+    //track parca
+    //genre tur demek sureklı karısıyolar 
 
     item.innerHTML = `
         <div class="track-number">${index + 1}</div>
@@ -333,18 +407,42 @@ function createTrackItem(track, index) {
         </button>
     `;
 
-    // Play butonuna tıklanınca
+    // Play butonuna tıklanınca — togglePlayTrack fonksiyonunu kullan
     item.querySelector('.track-play-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        playTrack(track);
-        highlightCurrentTrack(index);
+        e.stopPropagation();// ılerletmeyı duruduran bır event komutu
+        togglePlayTrack(track, index);// aç kapa komutu 
+        // track sarkının tum bılgılerı
+        // index ise listenın sırası
     });
 
-    // Satıra tıklanınca da çal
+    // Satıra tıklayınca da togglePlayTrack
     item.addEventListener('click', () => {
-        playTrack(track);
-        highlightCurrentTrack(index);
+        togglePlayTrack(track, index);
     });
+    // current suan calan anlamındadır
+    // Şarkı satırına veya play ikonuna tıklayınca: Eğer o şarkı çalıyorsa duraklat/oynat togglesı yapar, farklıysa baştan çalar
+    function togglePlayTrack(track, index) {
+        //Şu an çalan şarkı mı?
+        //Şu an hafızada seçili bir şarkı var mı? (Boş mu değil mi?)
+        //id === id -> "Varsa, o şarkının kimliği ile senin şimdi tıkladığın şarkının kimliği AYNI MI?
+        const isSame = (currentTrackList[currentTrackIndex] && String(currentTrackList[currentTrackIndex].id) === String(track.id));
+        //tıkladıgım sey gercekten calan sey mı 
+        if (isSame) {
+            if (isPlaying) {
+                audioPlayer.pause();
+                //aduıo kısmı muzık kısmındakı sadece hoparları kapatmak ıcın 
+                //false olması sısteme sustum demek ıcın bılgıysarın beynını guncellemek ıcın 
+                isPlaying = false;
+            } else {
+                audioPlayer.play();
+                isPlaying = true;
+            }
+            updatePlayPauseButton();
+            highlightCurrentTrack(currentTrackIndex);
+        } else {
+            playTrack(track, index);
+        }
+    }
 
     return item;
 }
@@ -352,7 +450,8 @@ function createTrackItem(track, index) {
 // Çalan şarkıyı vurgula
 function highlightCurrentTrack(index) {
     document.querySelectorAll('.track-item').forEach((item, i) => {
-        if (i === index) {
+        if (i === index) {//sıfırsa renk ekle yoksa ekleme
+            //index o an calmsını ıstedıgımız sarkıdır lıstesını alır
             item.classList.add('playing');
         } else {
             item.classList.remove('playing');
@@ -371,6 +470,7 @@ function activateFooterPlayer() {
 
 //Sol Panel Playlist'ler
 async function loadPlaylists() {
+    //async yüzden bu fonksiyon çalışırken diğer işleri kilitleme, cevap gelene kadar bekle der
     try {
         const response = await fetch(API_BASE + '/api/playlists');
         const playlists = await response.json();
@@ -404,7 +504,7 @@ async function loadMidCards() {
 
         tracks.forEach(track => {
             const card = createMusicCard(track);
-            container.appendChild(card);
+            container.appendChild(card);// fızıksel olarak havada durmasın dıye appenchıld ıle kutu ıcıne yerlestırıyoruz
         });
 
         currentTrackList = tracks;
@@ -414,7 +514,7 @@ async function loadMidCards() {
 }
 
 // Müzik kartı oluştur
-function createMusicCard(track) {
+function createMusicCard(track) {// track parca demek genre tür demek cok karıstırıyosun dıkkat et
     const col = document.createElement('div');
     col.className = 'col-6 col-md-4 col-lg-2 mb-3';
 
@@ -439,7 +539,7 @@ function createMusicCard(track) {
         playTrack(track);
     });
 
-    return col;
+    return col;// hem durdurup hem teslım edıyo 
 }
 
 //  Arama Fonksıyonu
@@ -448,40 +548,41 @@ function setupSearch() {
     const midSearchInput = document.getElementById('midsearch');
     if (midSearchInput) {
         let searchTimeout;
-        midSearchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
+        midSearchInput.addEventListener('input', (e) => {// ınput eventı tetıkler 
+            clearTimeout(searchTimeout);//searchtımeout arama idsi cleartımeout 500 msten  kucukse arama yapma dur yorma dıyo 
+            searchTimeout = setTimeout(() => {// settimeoutu 500 e bagladık arama suresı 500ms oldugunda sonuclar cıkıyo
                 searchJamendo(e.target.value);
-            }, 500); // 500ms bekle (debounce)
+            }, 500); // 500ms bekle (debounce)// kulanıcının her harfında arama yapmamak ıcın bekletıyoruz
         });
     }
 }
 
 // Jamendo'da şarkı ara
-async function searchJamendo(query) {
+async function searchJamendo(query) {//async ekranı dondurma ben bekletırsemde calısan seylerı cevam ettır
     const tracksList = document.getElementById('tracksList');
     const title = document.getElementById('musiclistmid');
 
-    if (!query || query.length < 2) {
+    if (!query || query.length < 2) {// kutu bossa veya 2 harften kucukse dıye mı bakıyor 
         // Boşsa ana sayfaya dön
         showHomeView();
         return;
     }
 
     // Başlığı güncelle
-    if (title) title.textContent = `"${query}" için arama sonuçları`;
+    if (title) title.textContent = `"${query}" için arama sonuçları`;//query detaylandırmak ıcın kulandıgım degısken 
 
     // Tracks bölümünü göster
     showSection('tracksSection');
 
     const genreTitle = document.getElementById('currentGenreTitle');
-    if (genreTitle) genreTitle.innerHTML = `<i class="bi bi-search"></i> "${query}" Sonuçları`;
+    if (genreTitle) genreTitle.innerHTML = `<i class="bi bi-search"></i> "${query}" Sonuçları`;// tür kısmı emojısı quresyı
 
     if (tracksList) tracksList.innerHTML = '<div class="loading-text"><i class="bi bi-hourglass-split"></i> Aranıyor...</div>';
 
     try {
         const response = await fetch(API_BASE + `/api/jamendo/search-clean?q=${encodeURIComponent(query)}&limit=20`);
-        const tracks = await response.json();
+        //encodeurı kısmı ınternetle konusur kodu ınternetın anlayacagı sekılde acıklar
+        const tracks = await response.json(); // burdakı json apıden gelen verılerı lıstelıyo 
 
         if (tracks.error) {
             tracksList.innerHTML = `<div class="error-text"><i class="bi bi-exclamation-circle"></i> Hata: ${tracks.error}</div>`;
@@ -497,8 +598,8 @@ async function searchJamendo(query) {
         tracksList.innerHTML = '';
 
         tracks.forEach((track, index) => {
-            const trackItem = createTrackItem(track, index);
-            tracksList.appendChild(trackItem);
+            const trackItem = createTrackItem(track, index);//index hangı sarkıda hangı numarada oldugunu soyluyo
+            tracksList.appendChild(trackItem);//appenchıld mantıgı bunları 1 2 3 dıye sıralıyo sıraya alıyo 
         });
 
     } catch (error) {
@@ -509,10 +610,23 @@ async function searchJamendo(query) {
 
 // Player kontrollerı
 function setupPlayerControls() {
-    // Play/Pause butonu
+
+    // Karışık (shuffle) butonu (1. buton)
+    const shuffleBtn = document.querySelector('.player-controls button:nth-child(1)');
+    if (shuffleBtn) {
+        shuffleBtn.addEventListener('click', () => {
+            if (!currentTrackList || currentTrackList.length === 0) return;
+            let rand = Math.floor(Math.random() * currentTrackList.length);
+            //matfloor tam sayı olmak zorunda ve mat random ıle rasgele tam sayı cek dıyo 
+            // lıtesyıde ona gore degıstır 1 8 13 olsun gıbı 
+            playTrack(currentTrackList[rand], rand);
+        });
+    }
+
+    // Play/Pause butonu (3. buton)
     const playPauseBtn = document.querySelector('.player-controls button:nth-child(3)');
     if (playPauseBtn) {
-        playPauseBtn.addEventListener('click', togglePlayPause);
+        playPauseBtn.addEventListener('click', togglePlayPause);//toggle ac kapa tusu 
     }
 
     // Previous butonu
@@ -521,18 +635,50 @@ function setupPlayerControls() {
         prevBtn.addEventListener('click', playPrevious);
     }
 
-    // Next butonu
+
+    // Next butonu (4. buton)
     const nextBtn = document.querySelector('.player-controls button:nth-child(4)');
     if (nextBtn) {
         nextBtn.addEventListener('click', playNext);
     }
 
-    // Progress bar
+    // 10 sn ileri sarma butonu (5. buton, döngü/tekrar ikonu)
+    const skip10sBtn = document.querySelector('.player-controls button:nth-child(5)');
+    if (skip10sBtn) {
+        skip10sBtn.addEventListener('click', () => {
+            skipForward10();
+        });
+    }
+
+    // 10 saniye ileri sarma fonksiyonu
+    // Footer player'daki 5. butona tıklanınca mevcut şarkıyı 10 saniye ileri sarar
+    function skipForward10() {
+        try {
+            if (!audioPlayer || !audioPlayer.src) return;//yoksa hıcbırsey yapma 
+            const totalDuration = audioPlayer.duration || 0;//Toplam süreyi al (yoksa 0)
+            const currentTime = audioPlayer.currentTime || 0;
+            const newTime = Math.min(totalDuration, currentTime + 10);
+            //mat min sarkının en kucuk olan sayısını alır
+            audioPlayer.currentTime = newTime;
+            updateProgress();
+            // Eğer süre sonuna çok yakınsa doğrudan sonraki parçaya geç
+            // sarkı suresı varsa 0 degılse ve suankı zaman 1 sanıyeden azsa dıger sarkıya gec
+            if (totalDuration > 0 && audioPlayer.currentTime >= totalDuration - 0.5) {
+                playNext();
+            }
+        } catch (e) {
+            console.error('skip10sBtn hata', e);
+        }
+    }
+
+    // Progress bar(ılerleme cubugu)
     const progressBar = document.getElementById('playerProgress');
     if (progressBar) {
-        progressBar.addEventListener('input', (e) => {
+        progressBar.addEventListener('input', (e) => {//tıklayınca tetıklenıyo 
             const duration = audioPlayer.duration;
             audioPlayer.currentTime = (e.target.value / 100) * duration;
+            // e targetle kutuya ulasırsın value ıle ıcındekı verıye ulasırsın
+            //cubuk okur 50 ye getırdıysen 50 der / 100 kodu bunu boler 100/50 =0.5
         });
     }
 
@@ -541,17 +687,32 @@ function setupPlayerControls() {
     if (volumeSlider) {
         volumeSlider.addEventListener('input', (e) => {
             audioPlayer.volume = e.target.value / 100;
+            // e targetle kutuya ulasırsın value ıle ıcındekı verıye ulasırsın
         });
     }
 
-    // Audio player event listeners
-    audioPlayer.addEventListener('timeupdate', updateProgress);
+    // Ses kapatma/açma (mute) butonu
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            audioPlayer.muted = !audioPlayer.muted;
+            //atama yapıyoruz ac kapa mantıgı true false mantıgıdır
+            muteBtn.className = audioPlayer.muted
+                ? 'bi bi-volume-mute-fill'
+                : 'bi bi-volume-up';
+        });
+    }
+
+    // Audio player olay dinleyicileri
+    audioPlayer.addEventListener('timeupdate', updateProgress);//cubugun sarkıyla beraber akmasını saglar
     audioPlayer.addEventListener('ended', playNext);
-    audioPlayer.addEventListener('loadedmetadata', updateDuration);
+    audioPlayer.addEventListener('loadedmetadata', updateDuration);//sarkı daha baslamadan bılgıler gelır
+    //sarkının ne kadar dakika sanıye oldugunu sayar
 }
 
 // Şarkı çal
-function playTrack(track) {
+function playTrack(track, providedIndex = null) {
+    // currentTrackList dizisindeki indeksi (0'dan başlayan sayı). Varsayılan null – eğer verilmezse, fonksiyon şarkının ID'sine göre indeksi bulur.
     // Şarkı bilgilerini güncelle
     const titleEl = document.getElementById('player-song-title');
     const artistEl = document.getElementById('player-song-artist');
@@ -560,8 +721,9 @@ function playTrack(track) {
     if (titleEl) titleEl.textContent = track.name;
     if (artistEl) artistEl.textContent = track.artist_name;
     if (imgEl) {
-        imgEl.src = track.album_image || 'resimler/default-album.png';
-        imgEl.onerror = () => imgEl.src = 'resimler/default-album.png';
+        imgEl.src = track.album_image || 'resimler/default-album.png';//burdaki src kaynak demek 
+        imgEl.onerror = () => imgEl.src = 'resimler/default-album.png'
+        // onerror bos cerceveye resım cemezse defualttan cekıyo
     }
 
     // Footer player'ı aktif et
@@ -576,9 +738,16 @@ function playTrack(track) {
     // Play butonunu güncelle
     updatePlayPauseButton();
 
-    // Mevcut index'i bul
-    currentTrackIndex = currentTrackList.findIndex(t => t.id === track.id);
-    if (currentTrackIndex === -1) currentTrackIndex = 0;
+    // currentTrackIndex'i belirle: Eğer providedIndex verildiyse onu kullan, yoksa id/string ile eşleşeni bul
+    if (providedIndex !== null && Number.isInteger(providedIndex)) {
+        currentTrackIndex = providedIndex;
+    } else {// Şarkı listesindeki id ile eşleşen şarkının index'ini bul
+        const found = currentTrackList.findIndex(t => String(t.id) === String(track.id));
+        currentTrackIndex = found !== -1 ? found : 0;
+    }
+
+    // Ensure UI highlights the active row
+    try { highlightCurrentTrack(currentTrackIndex); } catch (e) { /* hata olursa görmezden gel */ }
 }
 
 // Play/Pause toggle
@@ -606,14 +775,32 @@ function updatePlayPauseButton() {
 function playPrevious() {
     if (currentTrackList.length === 0) return;
     currentTrackIndex = (currentTrackIndex - 1 + currentTrackList.length) % currentTrackList.length;
-    playTrack(currentTrackList[currentTrackIndex]);
+    playTrack(currentTrackList[currentTrackIndex], currentTrackIndex);
 }
 
 // Sonraki şarkı
-function playNext() {
+// Next tuşu: Eğer ilk şarkıdaysak API'den rastgele şarkı çal, değilse sıradaki şarkıyı çal
+async function playNext() {
     if (currentTrackList.length === 0) return;
+    // Eğer ilk şarkıdaysak (index 0), API'den rastgele şarkı çek
+    if (currentTrackIndex === 0) {
+        try {
+            // API'den 50 şarkı çekip rastgele birini seçiyoruz (limit artırılabilir)
+            const response = await fetch(`${API_BASE}/api/jamendo/search-clean?q=&limit=50`);
+            const tracks = await response.json();
+            if (Array.isArray(tracks) && tracks.length > 0) {
+                const rand = Math.floor(Math.random() * tracks.length);
+                const randomTrack = tracks[rand];
+                playTrack(randomTrack, null); // index önemli değil, rastgele
+                return;
+            }
+        } catch (e) {
+            console.error('API üzerinden rastgele şarkı alınamadı:', e);
+        }
+    }
+    // Diğer durumlarda sıradaki şarkıyı çal
     currentTrackIndex = (currentTrackIndex + 1) % currentTrackList.length;
-    playTrack(currentTrackList[currentTrackIndex]);
+    playTrack(currentTrackList[currentTrackIndex], currentTrackIndex);
 }
 
 // Progress bar güncelle

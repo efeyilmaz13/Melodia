@@ -65,7 +65,6 @@
                         <i class="bi bi-search"></i>
                         <input id="midsearch" type="text" placeholder="Şarkı, sanatçı veya albüm ara...">
                     </div>
-
                     <!-- Sayfa Başlığı -->
                     <div class="page-header">
                         <h1 class="FirstTitle" id="musiclistmid">Bugün ne dinlemek istersin?</h1>
@@ -123,6 +122,7 @@
                     <div id="player-song-artist" style="font-size: 0.9em; color: #888;">Cem
                         Karaca
                     </div>
+                    <!-- embedded audio removed; footer player will be used -->
                 </div>
             </div>
             <div class="player-center"
@@ -152,7 +152,7 @@
             </div>
             <div class="player-sound"
                 style="display: flex; align-items: center; gap: 10px; width: 22%; min-width: 120px; justify-content: flex-end;">
-                <i class="bi bi-volume-up" style="font-size: 1.7em; color: #d63384;"></i>
+                <i id="muteBtn" class="bi bi-volume-up" style="font-size: 1.7em; color: #d63384; cursor:pointer;"></i>
                 <input type="range" min="0" max="100" value="70" style="width: 80px; accent-color: #d63384;">
             </div>
         </div>
